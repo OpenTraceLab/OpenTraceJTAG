@@ -190,16 +190,7 @@ func (cs *ChainSimulator) shiftBSR(tdi []byte, bits int) ([]byte, error) {
 			dstBitIdx := j % 8
 			
 			if byteIdx < len(tdi) {
-				oldVal := (dev.BSRState[dstByteIdx] & (1 << dstBitIdx)) != 0
 				newVal := (tdi[byteIdx] & (1 << bitIdx)) != 0
-				
-				// Debug PA5 cells (94=INPUT, 95=OUTPUT, 96=CONTROL)
-				if j >= 94 && j <= 96 {
-					if oldVal != newVal {
-						fmt.Printf("[SIM] BSR Update: dev%d cell %d: %v -> %v\n", devIdx, j, oldVal, newVal)
-					}
-				}
-				
 				if newVal {
 					dev.BSRState[dstByteIdx] |= 1 << dstBitIdx
 				} else {
@@ -247,9 +238,7 @@ func (cs *ChainSimulator) propagateConnections() {
 	for _, conn := range cs.Connections {
 		// Find the driven pin (output) and propagate to inputs
 		var drivenValue *bool
-		
-		fmt.Printf("[SIM] Checking connection %s with %d pins\n", conn.NetName, len(conn.Pins))
-		
+
 		for _, pin := range conn.Pins {
 			if pin.DeviceIndex >= len(cs.Devices) {
 				continue
@@ -276,10 +265,8 @@ func (cs *ChainSimulator) propagateConnections() {
 				
 				if byteIdx < len(dev.BSRState) {
 					value := (dev.BSRState[byteIdx] & (1 << bitIdx)) != 0
-					
 					if drivenValue == nil {
 						drivenValue = &value
-						fmt.Printf("[SIM]   Driver: dev%d.%s output cell %d = %v\n", pin.DeviceIndex, pin.PinName, outputCell.Number, value)
 					}
 				}
 			}
@@ -300,14 +287,10 @@ func (cs *ChainSimulator) propagateConnections() {
 					bitIdx := pin.BSRIndex % 8
 					
 					if byteIdx < len(dev.BSRState) {
-						oldVal := (dev.BSRState[byteIdx] & (1 << bitIdx)) != 0
 						if *drivenValue {
 							dev.BSRState[byteIdx] |= 1 << bitIdx
 						} else {
 							dev.BSRState[byteIdx] &^= 1 << bitIdx
-						}
-						if oldVal != *drivenValue {
-							fmt.Printf("[SIM]   Propagated to dev%d.%s input cell %d: %v -> %v\n", pin.DeviceIndex, pin.PinName, pin.BSRIndex, oldVal, *drivenValue)
 						}
 					}
 				}
