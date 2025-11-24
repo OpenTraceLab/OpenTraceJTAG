@@ -189,17 +189,27 @@ func TestConnectionPropagation(t *testing.T) {
 	}
 	
 	sim := NewChainSimulator(devices, connections)
-	
-	// Set pin 0 of device 0 to high
-	sim.Devices[0].BSRState[0] = 0x01
-	
+
+	// Get the actual OUTPUT cell for PA0 from the BSDL
+	// PA0 has: INPUT cell 0, OUTPUT cell 110, CONTROL cell 111
+	// We need to set the OUTPUT cell (110) high to propagate the value
+	outputCellPA0 := 110
+	byteIdx := outputCellPA0 / 8
+	bitIdx := outputCellPA0 % 8
+	sim.Devices[0].BSRState[byteIdx] |= 1 << bitIdx
+
+	// Also need to set the control cell to enable output (control cell 111, disable value is 1)
+	// So we need control = 0 to enable output, but let's just propagate and check INPUT cell
+
 	// Propagate connections
 	sim.propagateConnections()
-	
-	// Verify pin 0 of device 1 is also high
+
+	// Verify INPUT cell 0 of device 1 reflects the driven value
+	// The propagation reads from OUTPUT cell and writes to INPUT cells based on BSRIndex in PinRef
+	// Since PinRef has BSRIndex: 0 (the INPUT cell), that's where the value should be written
 	if sim.Devices[1].BSRState[0]&0x01 == 0 {
 		t.Error("Connection propagation failed: pin should be high")
 	}
-	
+
 	t.Log("Connection propagation test passed")
 }

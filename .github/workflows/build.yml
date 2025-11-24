@@ -40,7 +40,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgl1-mesa-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev libusb-1.0-0-dev
+          sudo apt-get install -y libgl1-mesa-dev libxcursor-dev libxrandr-dev libxinerama-dev libxi-dev libxxf86vm-dev libusb-1.0-0-dev libxkbcommon-dev libwayland-dev
 
       - name: Install macOS dependencies
         if: matrix.os == 'macos-latest'
