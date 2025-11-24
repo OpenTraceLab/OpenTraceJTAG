@@ -74,6 +74,14 @@ func TestDiscoverE2E(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
+			// Read in background to prevent pipe buffer from blocking on Windows
+			var buf bytes.Buffer
+			done := make(chan struct{})
+			go func() {
+				buf.ReadFrom(r)
+				close(done)
+			}()
+
 			// Reset flags to prevent accumulation between tests
 			simIDCodes = nil
 			deviceCount = 1
@@ -87,13 +95,11 @@ func TestDiscoverE2E(t *testing.T) {
 			// Execute
 			err := rootCmd.Execute()
 
-			// Restore stdout
+			// Restore stdout and wait for reader
 			w.Close()
 			os.Stdout = old
+			<-done
 
-			// Read captured output
-			var buf bytes.Buffer
-			buf.ReadFrom(r)
 			output := buf.String()
 
 			// Check error expectation
@@ -197,6 +203,14 @@ func TestParseE2E(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
+			// Read in background to prevent pipe buffer from blocking on Windows
+			var buf bytes.Buffer
+			done := make(chan struct{})
+			go func() {
+				buf.ReadFrom(r)
+				close(done)
+			}()
+
 			// Reset parse flags to prevent accumulation between tests
 			showInstructions = false
 			showBoundary = false
@@ -208,13 +222,11 @@ func TestParseE2E(t *testing.T) {
 			// Execute
 			err := rootCmd.Execute()
 
-			// Restore stdout
+			// Restore stdout and wait for reader
 			w.Close()
 			os.Stdout = old
+			<-done
 
-			// Read output
-			var buf bytes.Buffer
-			buf.ReadFrom(r)
 			output := buf.String()
 
 			// Check error expectation
@@ -270,6 +282,14 @@ func TestVerboseFlag(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
+			// Read in background to prevent pipe buffer from blocking on Windows
+			var buf bytes.Buffer
+			done := make(chan struct{})
+			go func() {
+				buf.ReadFrom(r)
+				close(done)
+			}()
+
 			// Reset flags to prevent accumulation between tests
 			simIDCodes = nil
 			deviceCount = 1
@@ -282,9 +302,8 @@ func TestVerboseFlag(t *testing.T) {
 
 			w.Close()
 			os.Stdout = old
+			<-done
 
-			var buf bytes.Buffer
-			buf.ReadFrom(r)
 			output := buf.String()
 
 			if err != nil {
@@ -358,6 +377,14 @@ func TestInfoE2E(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
+			// Read in background to prevent pipe buffer from blocking on Windows
+			var buf bytes.Buffer
+			done := make(chan struct{})
+			go func() {
+				buf.ReadFrom(r)
+				close(done)
+			}()
+
 			simIDCodes = nil
 			deviceCount = 1
 			bsdlDir = "testdata"
@@ -370,9 +397,8 @@ func TestInfoE2E(t *testing.T) {
 
 			w.Close()
 			os.Stdout = old
+			<-done
 
-			var buf bytes.Buffer
-			buf.ReadFrom(r)
 			output := buf.String()
 
 			if tt.wantErr {
@@ -462,6 +488,14 @@ func TestPinE2E(t *testing.T) {
 			r, w, _ := os.Pipe()
 			os.Stdout = w
 
+			// Read in background to prevent pipe buffer from blocking on Windows
+			var buf bytes.Buffer
+			done := make(chan struct{})
+			go func() {
+				buf.ReadFrom(r)
+				close(done)
+			}()
+
 			simIDCodes = nil
 			deviceCount = 1
 			bsdlDir = "testdata"
@@ -477,9 +511,8 @@ func TestPinE2E(t *testing.T) {
 
 			w.Close()
 			os.Stdout = old
+			<-done
 
-			var buf bytes.Buffer
-			buf.ReadFrom(r)
 			output := buf.String()
 
 			if tt.wantErr {
