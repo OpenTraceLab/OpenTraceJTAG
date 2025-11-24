@@ -146,7 +146,7 @@ func runReveng(cmd *cobra.Command, args []string) error {
 	}
 
 	if verbose {
-		fmt.Println("BSDL files loaded successfully\n")
+		fmt.Println("BSDL files loaded successfully")
 	}
 
 	// Discover chain
