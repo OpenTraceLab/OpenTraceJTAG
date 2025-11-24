@@ -49,32 +49,11 @@ jobs:
 
       - name: Install Windows dependencies
         if: matrix.os == 'windows-latest'
-        shell: powershell
+        shell: bash
         run: |
-          $libusbVersion = "1.0.27"
-          $url = "https://github.com/libusb/libusb/releases/download/v${libusbVersion}/libusb-${libusbVersion}.7z"
-          Invoke-WebRequest -Uri $url -OutFile libusb.7z
-          7z x libusb.7z -olibusb
-          $libusbPath = "${{ github.workspace }}/libusb"
-          $pkgconfigDir = "${{ github.workspace }}/pkgconfig"
-          New-Item -ItemType Directory -Force -Path $pkgconfigDir
-
-          # Create pkg-config file for libusb
-          @"
-          prefix=$libusbPath
-          exec_prefix=`${prefix}
-          libdir=`${prefix}/VS2022/MS64/dll
-          includedir=`${prefix}/include
-
-          Name: libusb-1.0
-          Description: C API for USB device access from Linux, Mac OS X, Windows, and OpenBSD/NetBSD userspace
-          Version: $libusbVersion
-          Libs: -L`${libdir} -lusb-1.0
-          Cflags: -I`${includedir}
-          "@ | Out-File -FilePath "$pkgconfigDir/libusb-1.0.pc" -Encoding ASCII
-
-          echo "PKG_CONFIG_PATH=$pkgconfigDir" >> $env:GITHUB_ENV
-          echo "${libusbPath}/VS2022/MS64/dll" >> $env:GITHUB_PATH
+          vcpkg install libusb:x64-windows
+          echo "PKG_CONFIG_PATH=$VCPKG_INSTALLATION_ROOT/installed/x64-windows/lib/pkgconfig" >> $GITHUB_ENV
+          echo "$VCPKG_INSTALLATION_ROOT/installed/x64-windows/bin" >> $GITHUB_PATH
 
       - name: Download dependencies
         run: go mod download
