@@ -55,10 +55,26 @@ jobs:
           $url = "https://github.com/libusb/libusb/releases/download/v${libusbVersion}/libusb-${libusbVersion}.7z"
           Invoke-WebRequest -Uri $url -OutFile libusb.7z
           7z x libusb.7z -olibusb
-          $libusbPath = "${{ github.workspace }}\libusb"
-          echo "CGO_CFLAGS=-I${libusbPath}\include\libusb-1.0" >> $env:GITHUB_ENV
-          echo "CGO_LDFLAGS=-L${libusbPath}\VS2022\MS64\dll -lusb-1.0" >> $env:GITHUB_ENV
-          echo "${libusbPath}\VS2022\MS64\dll" >> $env:GITHUB_PATH
+          $libusbPath = "${{ github.workspace }}/libusb"
+          $pkgconfigDir = "${{ github.workspace }}/pkgconfig"
+          New-Item -ItemType Directory -Force -Path $pkgconfigDir
+
+          # Create pkg-config file for libusb
+          @"
+          prefix=$libusbPath
+          exec_prefix=`${prefix}
+          libdir=`${prefix}/VS2022/MS64/dll
+          includedir=`${prefix}/include
+
+          Name: libusb-1.0
+          Description: C API for USB device access from Linux, Mac OS X, Windows, and OpenBSD/NetBSD userspace
+          Version: $libusbVersion
+          Libs: -L`${libdir} -lusb-1.0
+          Cflags: -I`${includedir}
+          "@ | Out-File -FilePath "$pkgconfigDir/libusb-1.0.pc" -Encoding ASCII
+
+          echo "PKG_CONFIG_PATH=$pkgconfigDir" >> $env:GITHUB_ENV
+          echo "${libusbPath}/VS2022/MS64/dll" >> $env:GITHUB_PATH
 
       - name: Download dependencies
         run: go mod download
