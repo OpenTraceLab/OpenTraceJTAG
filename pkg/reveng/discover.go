@@ -70,14 +70,6 @@ func DiscoverNetlist(
 	if len(candidates) == 0 {
 		return nil, fmt.Errorf("reveng: no candidate pins found")
 	}
-	
-	// Debug: log first few candidates
-	fmt.Printf("[REVENG] Selected %d candidate pins\n", len(candidates))
-	for i, c := range candidates {
-		if i < 10 {
-			fmt.Printf("[REVENG]   Candidate %d: dev%d.%s\n", i, c.ChainIndex, c.PinName)
-		}
-	}
 
 	// Initialize netlist
 	nl := NewNetlist(candidates)

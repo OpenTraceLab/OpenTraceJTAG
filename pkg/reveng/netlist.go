@@ -100,7 +100,7 @@ func (nl *Netlist) Find(pin bsr.PinRef) bsr.PinRef {
 
 // Finalize builds the final net list from the union-find structure.
 // This should be called after all Connect() operations are complete.
-// Nets with only a single pin are included (isolated pins).
+// Only nets with 2+ pins are included; isolated single-pin "nets" are skipped.
 func (nl *Netlist) Finalize() {
 	// Group pins by their root
 	netMap := make(map[string][]bsr.PinRef)

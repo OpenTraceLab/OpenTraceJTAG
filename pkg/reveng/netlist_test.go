@@ -81,16 +81,14 @@ func TestFinalize(t *testing.T) {
 	// Create net: A0-A1
 	nl.Connect(pins[0], pins[1])
 
-	// A2 and B0 remain isolated
+	// A2 and B0 remain isolated (single-pin nets are not included)
 
 	nl.Finalize()
 
-	// Should have 3 nets total:
-	// 1. {A0, A1}
-	// 2. {A2}
-	// 3. {B0}
-	if nl.NetCount() != 3 {
-		t.Errorf("expected 3 nets, got %d", nl.NetCount())
+	// Should have 1 net (only multi-pin nets are included, isolated pins are skipped)
+	// The net is {A0, A1}
+	if nl.NetCount() != 1 {
+		t.Errorf("expected 1 net, got %d", nl.NetCount())
 	}
 
 	// Should have 1 multi-pin net
