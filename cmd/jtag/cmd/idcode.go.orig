@@ -1,0 +1,211 @@
+package cmd
+
+import (
+	"fmt"
+	"os"
+	"strconv"
+	"strings"
+	"text/tabwriter"
+
+	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/idcode/deviceinfo"
+	"github.com/spf13/cobra"
+)
+
+var (
+	filterManufacturer string
+	filterFamily       string
+	listAll            bool
+)
+
+var idcodeCmd = &cobra.Command{
+	Use:   "idcode [idcode-value]",
+	Short: "Lookup IDCODE information",
+	Long: `Lookup and display JTAG IDCODE information.
+
+Examples:
+  # Lookup a specific IDCODE
+  jtag idcode 0x4BA00477
+  
+  # List all known devices
+  jtag idcode --list
+  
+  # Filter by manufacturer
+  jtag idcode --list --manufacturer STM
+  
+  # Filter by family
+  jtag idcode --list --family STM32F4`,
+	Args: cobra.MaximumNArgs(1),
+	Run:  runIDCodeLookup,
+}
+
+func init() {
+	rootCmd.AddCommand(idcodeCmd)
+	idcodeCmd.Flags().BoolVar(&listAll, "list", false, "List all known devices in database")
+	idcodeCmd.Flags().StringVar(&filterManufacturer, "manufacturer", "", "Filter by manufacturer name")
+	idcodeCmd.Flags().StringVar(&filterFamily, "family", "", "Filter by device family")
+}
+
+func runIDCodeLookup(cmd *cobra.Command, args []string) {
+	if listAll {
+		listDevices()
+		return
+	}
+
+	if len(args) == 0 {
+		fmt.Fprintln(os.Stderr, "Error: IDCODE value required (or use --list)")
+		cmd.Usage()
+		os.Exit(1)
+	}
+
+	// Parse IDCODE
+	idcodeStr := strings.TrimPrefix(args[0], "0x")
+	idcodeVal, err := strconv.ParseUint(idcodeStr, 16, 32)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: Invalid IDCODE format: %v\n", err)
+		os.Exit(1)
+	}
+
+	// Lookup device info
+	info := deviceinfo.Lookup(uint32(idcodeVal))
+	
+	// Display detailed information
+	fmt.Printf("\n")
+	fmt.Printf("IDCODE Information\n")
+	fmt.Printf("==================\n\n")
+	
+	fmt.Printf("Raw IDCODE:      0x%08X\n", info.IDCode.Raw)
+	fmt.Printf("Version:         %d\n", info.IDCode.Version)
+	fmt.Printf("Part Number:     0x%04X\n", info.IDCode.PartNumber)
+	fmt.Printf("Manufacturer:    %s (0x%03X)\n", info.Manufacturer.Name, info.Manufacturer.Code)
+	
+	if info.Name != "Unknown device" {
+		fmt.Printf("\nDevice Details\n")
+		fmt.Printf("--------------\n")
+		fmt.Printf("Name:            %s\n", info.Name)
+		if info.Family != "" {
+			fmt.Printf("Family:          %s\n", info.Family)
+		}
+		if info.Description != "" {
+			fmt.Printf("Description:     %s\n", info.Description)
+		}
+		if info.Package != "" {
+			fmt.Printf("Package:         %s\n", info.Package)
+		}
+		
+		fmt.Printf("\nCapabilities\n")
+		fmt.Printf("------------\n")
+		if info.HasARMCore {
+			fmt.Printf("ARM Core:        %s\n", info.ARMCore)
+		}
+		if info.IsMCU {
+			fmt.Printf("Type:            Microcontroller\n")
+		} else if info.IsFPGA {
+			fmt.Printf("Type:            FPGA\n")
+		} else if info.IsCPLD {
+			fmt.Printf("Type:            CPLD\n")
+		} else if info.IsSoC {
+			fmt.Printf("Type:            SoC\n")
+		}
+		fmt.Printf("Boundary Scan:   %v\n", info.HasBoundaryScan)
+		
+		if info.IRLength > 0 {
+			fmt.Printf("\nJTAG Details\n")
+			fmt.Printf("------------\n")
+			fmt.Printf("IR Length:       %d bits\n", info.IRLength)
+		}
+		
+		if info.DatasheetURL != "" || info.BSDLURL != "" {
+			fmt.Printf("\nResources\n")
+			fmt.Printf("---------\n")
+			if info.DatasheetURL != "" {
+				fmt.Printf("Datasheet:       %s\n", info.DatasheetURL)
+			}
+			if info.BSDLURL != "" {
+				fmt.Printf("BSDL:            %s\n", info.BSDLURL)
+			}
+		}
+	} else {
+		fmt.Printf("\nNote: Device not found in database\n")
+	}
+	
+	fmt.Printf("\n")
+}
+
+func listDevices() {
+	// Get all devices from database (we'll need to expose this)
+	devices := getAllDevices()
+	
+	// Apply filters
+	filtered := make([]deviceinfo.DeviceInfo, 0)
+	for _, dev := range devices {
+		if filterManufacturer != "" && !strings.Contains(strings.ToLower(dev.Manufacturer.Name), strings.ToLower(filterManufacturer)) {
+			continue
+		}
+		if filterFamily != "" && !strings.Contains(strings.ToLower(dev.Family), strings.ToLower(filterFamily)) {
+			continue
+		}
+		filtered = append(filtered, dev)
+	}
+	
+	if len(filtered) == 0 {
+		fmt.Println("No devices found matching filters")
+		return
+	}
+	
+	// Display as table
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "MANUFACTURER\tFAMILY\tNAME\tPART\tARM CORE\tTYPE")
+	fmt.Fprintln(w, "------------\t------\t----\t----\t--------\t----")
+	
+	for _, dev := range filtered {
+		deviceType := ""
+		if dev.IsMCU {
+			deviceType = "MCU"
+		} else if dev.IsFPGA {
+			deviceType = "FPGA"
+		} else if dev.IsCPLD {
+			deviceType = "CPLD"
+		} else if dev.IsSoC {
+			deviceType = "SoC"
+		}
+		
+		fmt.Fprintf(w, "%s\t%s\t%s\t0x%04X\t%s\t%s\n",
+			dev.Manufacturer.Abbreviation,
+			dev.Family,
+			dev.Name,
+			dev.IDCode.PartNumber,
+			dev.ARMCore,
+			deviceType,
+		)
+	}
+	
+	w.Flush()
+	fmt.Printf("\nTotal: %d devices\n", len(filtered))
+}
+
+// getAllDevices returns all devices in the database
+// This is a helper that reconstructs devices from the internal db
+func getAllDevices() []deviceinfo.DeviceInfo {
+	// For now, return a sample set - in production this would iterate the db
+	// We'll need to expose the db or add a List() function to deviceinfo
+	devices := []deviceinfo.DeviceInfo{}
+	
+	// Sample some known IDCODEs to demonstrate
+	knownIDCodes := []uint32{
+		0x06438041, // STM32F303
+		0x06413041, // STM32F407
+		0x06419041, // STM32F42x
+		0x06422041, // STM32F30x
+		0x06449050, // STM32F74x
+		0x06450050, // STM32H74x
+	}
+	
+	for _, id := range knownIDCodes {
+		info := deviceinfo.Lookup(id)
+		if info.Name != "Unknown device" {
+			devices = append(devices, info)
+		}
+	}
+	
+	return devices
+}

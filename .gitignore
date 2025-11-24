@@ -1,0 +1,47 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Dependency directories
+vendor/
+
+# Go workspace file
+go.work
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+bin/
+dist/
+build/
+
+# Reference implementations (for study only)
+ref/
+
+# Example board files (optional - uncomment if you don't want to commit test files)
+# *.kicad_pcb
+# *.kicad_pro
+
+# IDE and CLI tool directories
+.amazonq/
+.claude/
+.kiro/
+.gocache/

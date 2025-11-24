@@ -1,0 +1,41 @@
+; Minimal complete KiCad PCB file for testing
+
+(kicad_pcb
+  (version 20211014)
+  (generator pcbnew)
+
+  (general
+    (thickness 1.6)
+    (title "Minimal Test Board")
+    (date "2024-01-15")
+    (rev "1.0")
+  )
+
+  (page A4)
+
+  (layers
+    (0 "F.Cu" signal)
+    (31 "B.Cu" signal)
+    (32 "B.Adhes" user)
+    (33 "F.Adhes" user)
+    (34 "B.Paste" user)
+    (35 "F.Paste" user)
+    (36 "B.SilkS" user)
+    (37 "F.SilkS" user)
+    (38 "B.Mask" user)
+    (39 "F.Mask" user)
+    (40 "Dwgs.User" user)
+    (41 "Cmts.User" user)
+    (42 "Eco1.User" user)
+    (43 "Eco2.User" user)
+    (44 "Edge.Cuts" user)
+    (45 "Margin" user)
+  )
+
+  (setup
+    (pad_to_mask_clearance 0)
+    (grid_origin 0 0)
+  )
+
+  (net 0 "")
+)

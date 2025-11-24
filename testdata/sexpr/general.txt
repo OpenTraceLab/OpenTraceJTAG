@@ -1,0 +1,22 @@
+; General section examples from KiCad PCB files
+
+; Complete general section
+(general
+  (thickness 1.6)
+  (title "Example Board")
+  (date "2024-01-15")
+  (rev "1.0")
+  (company "Acme Corp")
+)
+
+; Minimal general section (only thickness)
+(general
+  (thickness 1.6)
+)
+
+; General with some optional fields
+(general
+  (thickness 1.2)
+  (title "Prototype")
+  (rev "A")
+)

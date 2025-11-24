@@ -1,0 +1,17 @@
+(kicad_pcb
+	(version 20211014)
+	(generator pcbnew)
+	(general
+		(thickness 1.6)
+	)
+	(layers
+		(0 "F.Cu" signal)
+		(31 "B.Cu" signal)
+	)
+	(net 0 "")
+	(net 1 "GND")
+	(net 2 "+5V")
+	(net 3 "+3V3")
+	(net 4 "/DATA")
+	(net 5 "/CLK")
+)

@@ -1,0 +1,19 @@
+; Header examples from KiCad PCB files
+
+; Valid KiCad 6.0 header
+(kicad_pcb (version 20211014) (generator pcbnew))
+
+; Valid KiCad 6.0.10 header with host
+(kicad_pcb (version 20221018) (host pcbnew "(6.0.10)"))
+
+; Valid KiCad 7.0 header
+(kicad_pcb (version 20230314) (generator pcbnew))
+
+; Invalid: old version (KiCad 5)
+(kicad_pcb (version 20171130))
+
+; Invalid: missing version
+(kicad_pcb (generator pcbnew))
+
+; Invalid: wrong root token
+(kicad_sch (version 20211014))

@@ -1,0 +1,26 @@
+; Position examples from KiCad PCB files
+; These are used for unit testing position parsing
+
+; Simple 2D position (at X Y) - coordinates in nanometers
+(at 100000000 50000000)
+
+; Position with rotation (at X Y angle) - angle in decidegrees
+(at 100000000 50000000 900)
+
+; Position with negative coordinates
+(at -25000000 -30000000)
+
+; Position with decimal values (rare, but possible)
+(at 100500000 50250000 450)
+
+; In context - footprint position
+(module "Resistor_SMD:R_0805" (layer "F.Cu") (at 100000000 50000000 900))
+
+; In context - pad position (relative to footprint)
+(pad "1" smd rect (at -900000 0) (size 1000000 1200000))
+
+; In context - text position
+(fp_text reference "R1" (at 0 0 90) (layer "F.SilkS"))
+
+; In context - via position
+(via (at 105000000 55000000) (size 800000) (drill 400000))

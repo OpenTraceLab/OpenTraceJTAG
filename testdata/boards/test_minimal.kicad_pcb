@@ -1,0 +1,18 @@
+(kicad_pcb
+	(version 20211014)
+	(generator pcbnew)
+	(general
+		(thickness 1.6)
+		(title "Test Board")
+		(date "2024-01-15")
+		(rev "1.0")
+		(company "Test Company")
+	)
+	(layers
+		(0 "F.Cu" signal)
+		(31 "B.Cu" signal)
+		(36 "B.SilkS" user)
+		(37 "F.SilkS" user)
+		(44 "Edge.Cuts" user)
+	)
+)
