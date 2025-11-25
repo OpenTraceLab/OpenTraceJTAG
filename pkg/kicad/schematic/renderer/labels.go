@@ -1,0 +1,215 @@
+package renderer
+
+import (
+	"image/color"
+	"math"
+
+	"gioui.org/f32"
+	"gioui.org/layout"
+	"gioui.org/op"
+	"gioui.org/op/clip"
+	"gioui.org/op/paint"
+	"gioui.org/unit"
+
+	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/renderer"
+	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/schematic"
+)
+
+// RenderLabels renders all local labels in the schematic
+func RenderLabels(gtx layout.Context, camera *renderer.Camera, labels []schematic.Label, colors *SchematicColors) {
+	if len(labels) == 0 {
+		return
+	}
+
+	for _, label := range labels {
+		renderLocalLabel(gtx, camera, label, colors)
+	}
+}
+
+// RenderGlobalLabels renders all global labels in the schematic
+func RenderGlobalLabels(gtx layout.Context, camera *renderer.Camera, labels []schematic.GlobalLabel, colors *SchematicColors) {
+	if len(labels) == 0 {
+		return
+	}
+
+	for _, label := range labels {
+		renderGlobalLabel(gtx, camera, label, colors)
+	}
+}
+
+// RenderHierLabels renders all hierarchical labels in the schematic
+func RenderHierLabels(gtx layout.Context, camera *renderer.Camera, labels []schematic.HierLabel, colors *SchematicColors) {
+	if len(labels) == 0 {
+		return
+	}
+
+	for _, label := range labels {
+		renderHierLabel(gtx, camera, label, colors)
+	}
+}
+
+// renderLocalLabel renders a single local label
+func renderLocalLabel(gtx layout.Context, camera *renderer.Camera, label schematic.Label, colors *SchematicColors) {
+	x, y := camera.WorldToScreen(label.Position)
+
+	// Save the current transformation
+	stack := op.Affine(f32.Affine2D{}.Offset(f32.Pt(float32(x), float32(y)))).Push(gtx.Ops)
+	defer stack.Pop()
+
+	// Apply rotation if needed
+	if label.Angle != 0 {
+		radians := float64(label.Angle) * math.Pi / 180.0
+		rot := f32.Affine2D{}.Rotate(f32.Pt(0, 0), float32(radians))
+		op.Affine(rot).Add(gtx.Ops)
+	}
+
+	// Render the text
+	renderLabelText(gtx, label.Text, label.Effects, colors.LocalLabel)
+}
+
+// renderGlobalLabel renders a single global label with its shape
+func renderGlobalLabel(gtx layout.Context, camera *renderer.Camera, label schematic.GlobalLabel, colors *SchematicColors) {
+	x, y := camera.WorldToScreen(label.Position)
+
+	// Save the current transformation
+	stack := op.Affine(f32.Affine2D{}.Offset(f32.Pt(float32(x), float32(y)))).Push(gtx.Ops)
+	defer stack.Pop()
+
+	// Apply rotation if needed
+	if label.Angle != 0 {
+		radians := float64(label.Angle) * math.Pi / 180.0
+		rot := f32.Affine2D{}.Rotate(f32.Pt(0, 0), float32(radians))
+		op.Affine(rot).Add(gtx.Ops)
+	}
+
+	// Draw shape indicator based on label shape
+	drawLabelShape(gtx, label.Shape, label.Text, label.Effects, colors)
+
+	// Render the text
+	renderLabelText(gtx, label.Text, label.Effects, colors.GlobalLabel)
+}
+
+// renderHierLabel renders a single hierarchical label
+func renderHierLabel(gtx layout.Context, camera *renderer.Camera, label schematic.HierLabel, colors *SchematicColors) {
+	x, y := camera.WorldToScreen(label.Position)
+
+	// Save the current transformation
+	stack := op.Affine(f32.Affine2D{}.Offset(f32.Pt(float32(x), float32(y)))).Push(gtx.Ops)
+	defer stack.Pop()
+
+	// Apply rotation if needed
+	if label.Angle != 0 {
+		radians := float64(label.Angle) * math.Pi / 180.0
+		rot := f32.Affine2D{}.Rotate(f32.Pt(0, 0), float32(radians))
+		op.Affine(rot).Add(gtx.Ops)
+	}
+
+	// Draw shape indicator
+	drawLabelShape(gtx, label.Shape, label.Text, label.Effects, colors)
+
+	// Render the text
+	renderLabelText(gtx, label.Text, label.Effects, colors.HierLabel)
+}
+
+// renderLabelText renders the text content of a label
+func renderLabelText(gtx layout.Context, text string, effects schematic.Effects, labelColor color.NRGBA) {
+	if text == "" {
+		return
+	}
+
+	// Determine font size
+	fontSize := unit.Sp(12) // Default size
+	if effects.Font.Size.Height > 0 {
+		// Convert from mm to sp (approximate)
+		fontSize = unit.Sp(effects.Font.Size.Height * 3.5)
+	}
+
+	// For now, we're just setting up the color
+	// Full text rendering with proper shaping will be added later
+	// This requires integration with material.Theme and proper text widgets
+	paint.ColorOp{Color: labelColor}.Add(gtx.Ops)
+
+	// TODO: Implement proper text rendering with:
+	// - Text shaping using widget.Label or material.Label
+	// - Proper font size handling
+	// - Text effects (bold, italic, etc.)
+	// - Proper text positioning and bounding boxes
+	_ = fontSize // Use fontSize when implementing proper text rendering
+	_ = text     // Use text when implementing proper text rendering
+}
+
+// drawLabelShape draws the background shape for global/hierarchical labels
+func drawLabelShape(gtx layout.Context, shape string, text string, effects schematic.Effects, colors *SchematicColors) {
+	if shape == "" {
+		return
+	}
+
+	// Estimate text width (rough approximation)
+	textWidth := float32(len(text) * 8)
+	textHeight := float32(16)
+
+	if effects.Font.Size.Height > 0 {
+		textHeight = float32(effects.Font.Size.Height * 3.5)
+		textWidth = float32(len(text)) * textHeight * 0.6
+	}
+
+	const arrowSize = 8.0
+	const padding = 4.0
+
+	var path clip.Path
+	path.Begin(gtx.Ops)
+
+	switch shape {
+	case "input":
+		// Arrow pointing into the label (left side)
+		// Draw rectangle with arrow on left
+		path.MoveTo(f32.Pt(-arrowSize, textHeight/2))
+		path.LineTo(f32.Pt(0, 0))
+		path.LineTo(f32.Pt(textWidth+padding, 0))
+		path.LineTo(f32.Pt(textWidth+padding, textHeight))
+		path.LineTo(f32.Pt(0, textHeight))
+		path.LineTo(f32.Pt(-arrowSize, textHeight/2))
+		path.Close()
+
+	case "output":
+		// Arrow pointing out of the label (right side)
+		path.MoveTo(f32.Pt(0, 0))
+		path.LineTo(f32.Pt(textWidth+padding, 0))
+		path.LineTo(f32.Pt(textWidth+padding+arrowSize, textHeight/2))
+		path.LineTo(f32.Pt(textWidth+padding, textHeight))
+		path.LineTo(f32.Pt(0, textHeight))
+		path.Close()
+
+	case "bidirectional":
+		// Arrows on both sides
+		path.MoveTo(f32.Pt(-arrowSize, textHeight/2))
+		path.LineTo(f32.Pt(0, 0))
+		path.LineTo(f32.Pt(textWidth+padding, 0))
+		path.LineTo(f32.Pt(textWidth+padding+arrowSize, textHeight/2))
+		path.LineTo(f32.Pt(textWidth+padding, textHeight))
+		path.LineTo(f32.Pt(0, textHeight))
+		path.Close()
+
+	case "passive", "3state", "unspecified":
+		// Simple rectangle
+		path.MoveTo(f32.Pt(0, 0))
+		path.LineTo(f32.Pt(textWidth+padding, 0))
+		path.LineTo(f32.Pt(textWidth+padding, textHeight))
+		path.LineTo(f32.Pt(0, textHeight))
+		path.Close()
+
+	default:
+		// Unknown shape - draw simple rectangle
+		path.MoveTo(f32.Pt(0, 0))
+		path.LineTo(f32.Pt(textWidth+padding, 0))
+		path.LineTo(f32.Pt(textWidth+padding, textHeight))
+		path.LineTo(f32.Pt(0, textHeight))
+		path.Close()
+	}
+
+	// Draw the shape outline
+	paint.FillShape(gtx.Ops, colors.GlobalLabel, clip.Stroke{
+		Path:  path.End(),
+		Width: 2.0,
+	}.Op())
+}
