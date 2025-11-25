@@ -5,15 +5,25 @@ import (
 	"math"
 
 	"gioui.org/f32"
+	"gioui.org/font/gofont"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
+	"gioui.org/text"
 	"gioui.org/unit"
+	"gioui.org/widget/material"
 
 	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/renderer"
 	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/schematic"
 )
+
+// Global theme for text rendering
+var defaultTheme = material.NewTheme()
+
+func init() {
+	defaultTheme.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
+}
 
 // RenderLabels renders all local labels in the schematic
 func RenderLabels(gtx layout.Context, camera *renderer.Camera, labels []schematic.Label, colors *SchematicColors) {
@@ -112,30 +122,25 @@ func renderHierLabel(gtx layout.Context, camera *renderer.Camera, label schemati
 }
 
 // renderLabelText renders the text content of a label
-func renderLabelText(gtx layout.Context, text string, effects schematic.Effects, labelColor color.NRGBA) {
-	if text == "" {
+func renderLabelText(gtx layout.Context, textStr string, effects schematic.Effects, labelColor color.NRGBA) {
+	if textStr == "" {
 		return
 	}
 
-	// Determine font size
-	fontSize := unit.Sp(12) // Default size
+	// Determine font size - KiCad schematic text is typically around 1.27mm (50mil)
+	fontSize := 12.0 // Default size in points
 	if effects.Font.Size.Height > 0 {
-		// Convert from mm to sp (approximate)
-		fontSize = unit.Sp(effects.Font.Size.Height * 3.5)
+		// Convert from mm to points (1mm ≈ 2.83 points)
+		fontSize = effects.Font.Size.Height * 2.83
 	}
 
-	// For now, we're just setting up the color
-	// Full text rendering with proper shaping will be added later
-	// This requires integration with material.Theme and proper text widgets
-	paint.ColorOp{Color: labelColor}.Add(gtx.Ops)
+	// Create a material label for text rendering
+	lbl := material.Label(defaultTheme, unit.Sp(fontSize), textStr)
+	lbl.Color = labelColor
+	lbl.Alignment = text.Start
 
-	// TODO: Implement proper text rendering with:
-	// - Text shaping using widget.Label or material.Label
-	// - Proper font size handling
-	// - Text effects (bold, italic, etc.)
-	// - Proper text positioning and bounding boxes
-	_ = fontSize // Use fontSize when implementing proper text rendering
-	_ = text     // Use text when implementing proper text rendering
+	// Render the text
+	lbl.Layout(gtx)
 }
 
 // drawLabelShape draws the background shape for global/hierarchical labels

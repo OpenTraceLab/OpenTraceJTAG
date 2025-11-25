@@ -8,6 +8,9 @@ import (
 	"gioui.org/op"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
+	"gioui.org/text"
+	"gioui.org/unit"
+	"gioui.org/widget/material"
 
 	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/renderer"
 	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/schematic"
@@ -543,21 +546,47 @@ func renderInvertedClockPin(gtx layout.Context, px, py, ex, ey float32, colors *
 
 // renderSymbolProperties renders the symbol's properties (Reference, Value, etc.)
 func renderSymbolProperties(gtx layout.Context, camera *renderer.Camera, symbol schematic.Symbol, colors *SchematicColors) {
-	// TODO: Implement proper text rendering for symbol properties
-	// This requires proper text shaping and positioning
-	// For now, we just set the color for when text rendering is implemented
-	paint.ColorOp{Color: colors.SymbolText}.Add(gtx.Ops)
-
-	// Properties to render:
-	// - Reference (e.g., "R1", "U1", "C2")
-	// - Value (e.g., "10k", "74HC04", "100nF")
-	// - Other visible properties
-
 	for _, prop := range symbol.Properties {
 		if prop.Key == "Reference" || prop.Key == "Value" {
-			// TODO: Render property text at appropriate position
-			// This will be implemented when we add proper text rendering
-			_ = prop.Value
+			renderPropertyText(gtx, camera, prop, colors)
 		}
 	}
+}
+
+// renderPropertyText renders a single property text
+func renderPropertyText(gtx layout.Context, camera *renderer.Camera, prop schematic.Property, colors *SchematicColors) {
+	if prop.Value == "" {
+		return
+	}
+
+	// Property positions are in symbol-local coordinates (mm)
+	// We need to apply zoom and position within the already-transformed symbol space
+	x := float32(prop.Position.X * camera.Zoom)
+	y := float32(prop.Position.Y * camera.Zoom)
+
+	// Save transformation state
+	stack := op.Affine(f32.Affine2D{}.Offset(f32.Pt(x, y))).Push(gtx.Ops)
+	defer stack.Pop()
+
+	// Apply rotation if needed
+	if prop.Position.Angle != 0 {
+		radians := float64(prop.Position.Angle) * math.Pi / 180.0
+		rot := f32.Affine2D{}.Rotate(f32.Pt(0, 0), float32(radians))
+		op.Affine(rot).Add(gtx.Ops)
+	}
+
+	// Determine font size - property text is typically 1.27mm in KiCad
+	fontSize := 1.27 * 2.83 // Default: 1.27mm converted to points
+	if prop.Effects.Font.Size.Height > 0 {
+		// Convert from mm to points (1mm ≈ 2.83 points)
+		fontSize = prop.Effects.Font.Size.Height * 2.83
+	}
+
+	// Create material label for text rendering
+	lbl := material.Label(defaultTheme, unit.Sp(fontSize), prop.Value)
+	lbl.Color = colors.SymbolText
+	lbl.Alignment = text.Start
+
+	// Render the property text
+	lbl.Layout(gtx)
 }
