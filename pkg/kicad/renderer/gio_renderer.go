@@ -16,31 +16,31 @@ import (
 	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget"
-	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/parser"
+	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/pcb"
 )
 
 // RenderBoard renders the entire board using Gio operations
-func RenderBoard(gtx layout.Context, camera *Camera, board *parser.Board) {
+func RenderBoard(gtx layout.Context, camera *Camera, board *pcb.Board) {
 	RenderBoardWithDebug(gtx, camera, board, 0.0)
 }
 
 // RenderBoardWithConfig renders the board with layer visibility control
-func RenderBoardWithConfig(gtx layout.Context, camera *Camera, board *parser.Board, config *LayerConfig) {
+func RenderBoardWithConfig(gtx layout.Context, camera *Camera, board *pcb.Board, config *LayerConfig) {
 	renderBoardWithOptions(gtx, camera, board, 0.0, "", config)
 }
 
 // RenderBoardWithHighlight renders the board with a specific net highlighted
-func RenderBoardWithHighlight(gtx layout.Context, camera *Camera, board *parser.Board, highlightNet string) {
+func RenderBoardWithHighlight(gtx layout.Context, camera *Camera, board *pcb.Board, highlightNet string) {
 	renderBoardWithOptions(gtx, camera, board, 0.0, highlightNet, nil)
 }
 
 // RenderBoardWithDebug renders the entire board with a debug rotation offset for J1/J2/U5
-func RenderBoardWithDebug(gtx layout.Context, camera *Camera, board *parser.Board, debugRotationOffset float64) {
+func RenderBoardWithDebug(gtx layout.Context, camera *Camera, board *pcb.Board, debugRotationOffset float64) {
 	renderBoardWithOptions(gtx, camera, board, debugRotationOffset, "", nil)
 }
 
 // renderBoardWithOptions is the internal render function with all options
-func renderBoardWithOptions(gtx layout.Context, camera *Camera, board *parser.Board, debugRotationOffset float64, highlightNet string, config *LayerConfig) {
+func renderBoardWithOptions(gtx layout.Context, camera *Camera, board *pcb.Board, debugRotationOffset float64, highlightNet string, config *LayerConfig) {
 	// Use default config if none provided
 	if config == nil {
 		config = NewLayerConfig()
@@ -74,7 +74,7 @@ func renderBoardWithOptions(gtx layout.Context, camera *Camera, board *parser.Bo
 }
 
 // renderPads renders all pads with proper rotation support
-func renderPads(gtx layout.Context, camera *Camera, board *parser.Board, debugRotationOffset float64) {
+func renderPads(gtx layout.Context, camera *Camera, board *pcb.Board, debugRotationOffset float64) {
 	for _, fp := range board.Footprints {
 		for _, pad := range fp.Pads {
 			// Get absolute pad position in board coordinates
@@ -154,7 +154,7 @@ func renderPads(gtx layout.Context, camera *Camera, board *parser.Board, debugRo
 }
 
 // renderPadsWithHighlight renders pads with highlighted net
-func renderPadsWithHighlight(gtx layout.Context, camera *Camera, board *parser.Board, debugRotationOffset float64, highlightNet string) {
+func renderPadsWithHighlight(gtx layout.Context, camera *Camera, board *pcb.Board, debugRotationOffset float64, highlightNet string) {
 	for _, fp := range board.Footprints {
 		for _, pad := range fp.Pads {
 			// Get absolute pad position in board coordinates
@@ -348,7 +348,7 @@ func renderRotatedRRectOld(gtx layout.Context, x, y, width, height, radians, cor
 }
 
 // renderTracks renders all tracks
-func renderTracks(gtx layout.Context, camera *Camera, board *parser.Board) {
+func renderTracks(gtx layout.Context, camera *Camera, board *pcb.Board) {
 	for _, track := range board.Tracks {
 		x1, y1 := camera.BoardToScreen(track.Start)
 		x2, y2 := camera.BoardToScreen(track.End)
@@ -364,7 +364,7 @@ func renderTracks(gtx layout.Context, camera *Camera, board *parser.Board) {
 }
 
 // renderTracksWithHighlight renders tracks with highlighted net
-func renderTracksWithHighlight(gtx layout.Context, camera *Camera, board *parser.Board, highlightNet string) {
+func renderTracksWithHighlight(gtx layout.Context, camera *Camera, board *pcb.Board, highlightNet string) {
 	for _, track := range board.Tracks {
 		x1, y1 := camera.BoardToScreen(track.Start)
 		x2, y2 := camera.BoardToScreen(track.End)
@@ -403,7 +403,7 @@ func renderLine(gtx layout.Context, x1, y1, x2, y2, width float64, lineColor col
 }
 
 // renderVias renders all vias
-func renderVias(gtx layout.Context, camera *Camera, board *parser.Board) {
+func renderVias(gtx layout.Context, camera *Camera, board *pcb.Board) {
 	for _, via := range board.Vias {
 		x, y := camera.BoardToScreen(via.Position)
 		radius := via.Size / 2.0 * camera.Zoom
@@ -425,7 +425,7 @@ func renderVias(gtx layout.Context, camera *Camera, board *parser.Board) {
 }
 
 // renderViasWithHighlight renders vias with highlighted net
-func renderViasWithHighlight(gtx layout.Context, camera *Camera, board *parser.Board, highlightNet string) {
+func renderViasWithHighlight(gtx layout.Context, camera *Camera, board *pcb.Board, highlightNet string) {
 	for _, via := range board.Vias {
 		x, y := camera.BoardToScreen(via.Position)
 		radius := via.Size / 2.0 * camera.Zoom
@@ -457,7 +457,7 @@ func renderViasWithHighlight(gtx layout.Context, camera *Camera, board *parser.B
 }
 
 // renderZones renders copper fill zones
-func renderZones(gtx layout.Context, camera *Camera, board *parser.Board) {
+func renderZones(gtx layout.Context, camera *Camera, board *pcb.Board) {
 	for _, zone := range board.Zones {
 		zoneColor := GetLayerColor(zone.Layer)
 		// Make zones semi-transparent
@@ -487,22 +487,22 @@ func renderZones(gtx layout.Context, camera *Camera, board *parser.Board) {
 }
 
 // renderFootprintAdhesive renders F.Adhes and B.Adhes layers
-func renderFootprintAdhesive(gtx layout.Context, camera *Camera, board *parser.Board) {
+func renderFootprintAdhesive(gtx layout.Context, camera *Camera, board *pcb.Board) {
 	renderFootprintLayer(gtx, camera, board, "F.Adhes", "B.Adhes", 0.0)
 }
 
 // renderFootprintPaste renders F.Paste and B.Paste layers
-func renderFootprintPaste(gtx layout.Context, camera *Camera, board *parser.Board) {
+func renderFootprintPaste(gtx layout.Context, camera *Camera, board *pcb.Board) {
 	renderFootprintLayer(gtx, camera, board, "F.Paste", "B.Paste", 0.0)
 }
 
 // renderFootprintMask renders F.Mask and B.Mask layers
-func renderFootprintMask(gtx layout.Context, camera *Camera, board *parser.Board) {
+func renderFootprintMask(gtx layout.Context, camera *Camera, board *pcb.Board) {
 	renderFootprintLayer(gtx, camera, board, "F.Mask", "B.Mask", 0.0)
 }
 
 // renderFootprintText renders footprint Reference and Value text
-func renderFootprintText(gtx layout.Context, camera *Camera, board *parser.Board, debugRotationOffset float64) {
+func renderFootprintText(gtx layout.Context, camera *Camera, board *pcb.Board, debugRotationOffset float64) {
 	collection := gofont.Collection()
 	shaper := text.NewShaper(text.WithCollection(collection))
 	
@@ -520,7 +520,7 @@ func renderFootprintText(gtx layout.Context, camera *Camera, board *parser.Board
 		
 		// For now, render Reference at footprint position
 		// TODO: Parse actual fp_text position and rotation from properties
-		x, y := camera.BoardToScreen(parser.Position{X: fp.Position.X, Y: fp.Position.Y})
+		x, y := camera.BoardToScreen(pcb.Position{X: fp.Position.X, Y: fp.Position.Y})
 		
 		fontSize := 1.0 * camera.Zoom // 1mm text
 		if fontSize < 8.0 {
@@ -557,22 +557,22 @@ func renderFootprintText(gtx layout.Context, camera *Camera, board *parser.Board
 }
 
 // renderFootprintFab renders F.Fab and B.Fab layers
-func renderFootprintFab(gtx layout.Context, camera *Camera, board *parser.Board) {
+func renderFootprintFab(gtx layout.Context, camera *Camera, board *pcb.Board) {
 	renderFootprintLayer(gtx, camera, board, "F.Fab", "B.Fab", 0.0)
 }
 
 // renderFootprintCourtyards renders F.CrtYd and B.CrtYd layers
-func renderFootprintCourtyards(gtx layout.Context, camera *Camera, board *parser.Board) {
+func renderFootprintCourtyards(gtx layout.Context, camera *Camera, board *pcb.Board) {
 	renderFootprintLayer(gtx, camera, board, "F.CrtYd", "B.CrtYd", 0.0)
 }
 
 // renderFootprintSilkscreen renders F.SilkS and B.SilkS layers
-func renderFootprintSilkscreen(gtx layout.Context, camera *Camera, board *parser.Board, debugRotationOffset float64) {
+func renderFootprintSilkscreen(gtx layout.Context, camera *Camera, board *pcb.Board, debugRotationOffset float64) {
 	renderFootprintLayer(gtx, camera, board, "F.SilkS", "B.SilkS", debugRotationOffset)
 }
 
 // renderFootprintLayer renders specific footprint layers
-func renderFootprintLayer(gtx layout.Context, camera *Camera, board *parser.Board, frontLayer, backLayer string, debugRotationOffset float64) {
+func renderFootprintLayer(gtx layout.Context, camera *Camera, board *pcb.Board, frontLayer, backLayer string, debugRotationOffset float64) {
 	for _, fp := range board.Footprints {
 		if len(fp.Graphics) == 0 {
 			continue
@@ -600,8 +600,8 @@ func renderFootprintLayer(gtx layout.Context, camera *Camera, board *parser.Boar
 				x2 := gr.End.X*cos - gr.End.Y*sin + fp.Position.X
 				y2 := gr.End.X*sin + gr.End.Y*cos + fp.Position.Y
 
-				sx1, sy1 := camera.BoardToScreen(parser.Position{X: x1, Y: y1})
-				sx2, sy2 := camera.BoardToScreen(parser.Position{X: x2, Y: y2})
+				sx1, sy1 := camera.BoardToScreen(pcb.Position{X: x1, Y: y1})
+				sx2, sy2 := camera.BoardToScreen(pcb.Position{X: x2, Y: y2})
 
 				strokeWidth := gr.Stroke.Width * camera.Zoom
 				if strokeWidth < 1.0 {
@@ -619,7 +619,7 @@ func renderFootprintLayer(gtx layout.Context, camera *Camera, board *parser.Boar
 				dy := gr.End.Y - gr.Center.Y
 				radius := math.Sqrt(dx*dx + dy*dy) * camera.Zoom
 				
-				scx, scy := camera.BoardToScreen(parser.Position{X: cx, Y: cy})
+				scx, scy := camera.BoardToScreen(pcb.Position{X: cx, Y: cy})
 				
 				if radius < 1.0 {
 					radius = 1.0
@@ -654,9 +654,9 @@ func renderFootprintLayer(gtx layout.Context, camera *Camera, board *parser.Boar
 				ex := gr.End.X*cos - gr.End.Y*sin + fp.Position.X
 				ey := gr.End.X*sin + gr.End.Y*cos + fp.Position.Y
 				
-				ssx, ssy := camera.BoardToScreen(parser.Position{X: sx, Y: sy})
-				smx, smy := camera.BoardToScreen(parser.Position{X: mx, Y: my})
-				sex, sey := camera.BoardToScreen(parser.Position{X: ex, Y: ey})
+				ssx, ssy := camera.BoardToScreen(pcb.Position{X: sx, Y: sy})
+				smx, smy := camera.BoardToScreen(pcb.Position{X: mx, Y: my})
+				sex, sey := camera.BoardToScreen(pcb.Position{X: ex, Y: ey})
 				
 				// Approximate arc with line segments
 				var path clip.Path
@@ -676,7 +676,7 @@ func renderFootprintLayer(gtx layout.Context, camera *Camera, board *parser.Boar
 }
 
 // renderGraphics renders graphic elements
-func renderGraphics(gtx layout.Context, camera *Camera, board *parser.Board) {
+func renderGraphics(gtx layout.Context, camera *Camera, board *pcb.Board) {
 	// Render lines
 	for _, grLine := range board.Graphics.Lines {
 		x1, y1 := camera.BoardToScreen(grLine.Start)
@@ -847,12 +847,12 @@ func renderGraphics(gtx layout.Context, camera *Camera, board *parser.Board) {
 }
 
 // renderFootprintGraphics renders graphics for each footprint with rotation
-func renderFootprintGraphics(gtx layout.Context, camera *Camera, board *parser.Board) {
+func renderFootprintGraphics(gtx layout.Context, camera *Camera, board *pcb.Board) {
 	renderFootprintGraphicsWithDebug(gtx, camera, board, 0.0)
 }
 
 // renderFootprintGraphicsWithDebug renders graphics for each footprint with debug rotation offset
-func renderFootprintGraphicsWithDebug(gtx layout.Context, camera *Camera, board *parser.Board, debugRotationOffset float64) {
+func renderFootprintGraphicsWithDebug(gtx layout.Context, camera *Camera, board *pcb.Board, debugRotationOffset float64) {
 	graphicsColor := color.NRGBA{R: 180, G: 180, B: 180, A: 255} // Silkscreen white
 
 	debugLogged := false // Only log once per frame
@@ -893,8 +893,8 @@ func renderFootprintGraphicsWithDebug(gtx layout.Context, camera *Camera, board 
 				endY := gr.End.X*sin + gr.End.Y*cos + fp.Position.Y
 				
 				// Convert to screen coordinates
-				sx1, sy1 := camera.BoardToScreen(parser.Position{X: startX, Y: startY})
-				sx2, sy2 := camera.BoardToScreen(parser.Position{X: endX, Y: endY})
+				sx1, sy1 := camera.BoardToScreen(pcb.Position{X: startX, Y: startY})
+				sx2, sy2 := camera.BoardToScreen(pcb.Position{X: endX, Y: endY})
 				
 				strokeWidth := gr.Stroke.Width * camera.Zoom
 				if strokeWidth < 1.0 {
@@ -909,7 +909,7 @@ func renderFootprintGraphicsWithDebug(gtx layout.Context, camera *Camera, board 
 
 // Layer-aware rendering functions
 
-func renderTracksWithConfig(gtx layout.Context, camera *Camera, board *parser.Board, config *LayerConfig) {
+func renderTracksWithConfig(gtx layout.Context, camera *Camera, board *pcb.Board, config *LayerConfig) {
 	for _, track := range board.Tracks {
 		if !config.IsVisible(track.Layer) {
 			continue
@@ -925,7 +925,7 @@ func renderTracksWithConfig(gtx layout.Context, camera *Camera, board *parser.Bo
 	}
 }
 
-func renderViasWithConfig(gtx layout.Context, camera *Camera, board *parser.Board, config *LayerConfig) {
+func renderViasWithConfig(gtx layout.Context, camera *Camera, board *pcb.Board, config *LayerConfig) {
 	// Vias are visible if any copper layer is visible
 	hasVisibleCopper := config.IsVisible("F.Cu") || config.IsVisible("B.Cu") ||
 		config.IsVisible("In1.Cu") || config.IsVisible("In2.Cu")
@@ -935,7 +935,7 @@ func renderViasWithConfig(gtx layout.Context, camera *Camera, board *parser.Boar
 	renderVias(gtx, camera, board)
 }
 
-func renderPadsWithConfig(gtx layout.Context, camera *Camera, board *parser.Board, debugRotationOffset float64, config *LayerConfig) {
+func renderPadsWithConfig(gtx layout.Context, camera *Camera, board *pcb.Board, debugRotationOffset float64, config *LayerConfig) {
 	for _, fp := range board.Footprints {
 		for _, pad := range fp.Pads {
 			// Check if any of the pad's layers are visible
@@ -1017,7 +1017,7 @@ func renderPadsWithConfig(gtx layout.Context, camera *Camera, board *parser.Boar
 	}
 }
 
-func renderZonesWithConfig(gtx layout.Context, camera *Camera, board *parser.Board, config *LayerConfig) {
+func renderZonesWithConfig(gtx layout.Context, camera *Camera, board *pcb.Board, config *LayerConfig) {
 	for _, zone := range board.Zones {
 		if !config.IsVisible(zone.Layer) {
 			continue
@@ -1044,7 +1044,7 @@ func renderZonesWithConfig(gtx layout.Context, camera *Camera, board *parser.Boa
 	}
 }
 
-func renderGraphicsWithConfig(gtx layout.Context, camera *Camera, board *parser.Board, config *LayerConfig) {
+func renderGraphicsWithConfig(gtx layout.Context, camera *Camera, board *pcb.Board, config *LayerConfig) {
 	for _, line := range board.Graphics.Lines {
 		if !config.IsVisible(line.Layer) {
 			continue
@@ -1106,7 +1106,7 @@ func renderGraphicsWithConfig(gtx layout.Context, camera *Camera, board *parser.
 }
 
 // renderArc renders an arc
-func renderArc(gtx layout.Context, camera *Camera, arc parser.GrArc, strokeWidth float64, color color.NRGBA) {
+func renderArc(gtx layout.Context, camera *Camera, arc pcb.GrArc, strokeWidth float64, color color.NRGBA) {
 	// Get arc parameters
 	cx, cy := camera.BoardToScreen(arc.Start)
 	ex, ey := camera.BoardToScreen(arc.End)
@@ -1125,47 +1125,47 @@ func renderArc(gtx layout.Context, camera *Camera, arc parser.GrArc, strokeWidth
 	paint.FillShape(gtx.Ops, color, stroke)
 }
 
-func renderFootprintSilkscreenWithConfig(gtx layout.Context, camera *Camera, board *parser.Board, debugRotationOffset float64, config *LayerConfig) {
+func renderFootprintSilkscreenWithConfig(gtx layout.Context, camera *Camera, board *pcb.Board, debugRotationOffset float64, config *LayerConfig) {
 	if !config.IsVisible("F.SilkS") && !config.IsVisible("B.SilkS") {
 		return
 	}
 	renderFootprintSilkscreen(gtx, camera, board, debugRotationOffset)
 }
 
-func renderFootprintFabWithConfig(gtx layout.Context, camera *Camera, board *parser.Board, config *LayerConfig) {
+func renderFootprintFabWithConfig(gtx layout.Context, camera *Camera, board *pcb.Board, config *LayerConfig) {
 	if !config.IsVisible("F.Fab") && !config.IsVisible("B.Fab") {
 		return
 	}
 	renderFootprintFab(gtx, camera, board)
 }
 
-func renderFootprintTextWithConfig(gtx layout.Context, camera *Camera, board *parser.Board, debugRotationOffset float64, config *LayerConfig) {
+func renderFootprintTextWithConfig(gtx layout.Context, camera *Camera, board *pcb.Board, debugRotationOffset float64, config *LayerConfig) {
 	// Text can be on various layers, check in the actual render function
 	renderFootprintText(gtx, camera, board, debugRotationOffset)
 }
 
-func renderFootprintCourtyardsWithConfig(gtx layout.Context, camera *Camera, board *parser.Board, config *LayerConfig) {
+func renderFootprintCourtyardsWithConfig(gtx layout.Context, camera *Camera, board *pcb.Board, config *LayerConfig) {
 	if !config.IsVisible("F.CrtYd") && !config.IsVisible("B.CrtYd") {
 		return
 	}
 	renderFootprintCourtyards(gtx, camera, board)
 }
 
-func renderFootprintMaskWithConfig(gtx layout.Context, camera *Camera, board *parser.Board, config *LayerConfig) {
+func renderFootprintMaskWithConfig(gtx layout.Context, camera *Camera, board *pcb.Board, config *LayerConfig) {
 	if !config.IsVisible("F.Mask") && !config.IsVisible("B.Mask") {
 		return
 	}
 	renderFootprintMask(gtx, camera, board)
 }
 
-func renderFootprintPasteWithConfig(gtx layout.Context, camera *Camera, board *parser.Board, config *LayerConfig) {
+func renderFootprintPasteWithConfig(gtx layout.Context, camera *Camera, board *pcb.Board, config *LayerConfig) {
 	if !config.IsVisible("F.Paste") && !config.IsVisible("B.Paste") {
 		return
 	}
 	renderFootprintPaste(gtx, camera, board)
 }
 
-func renderFootprintAdhesiveWithConfig(gtx layout.Context, camera *Camera, board *parser.Board, config *LayerConfig) {
+func renderFootprintAdhesiveWithConfig(gtx layout.Context, camera *Camera, board *pcb.Board, config *LayerConfig) {
 	if !config.IsVisible("F.Adhes") && !config.IsVisible("B.Adhes") {
 		return
 	}
@@ -1173,7 +1173,7 @@ func renderFootprintAdhesiveWithConfig(gtx layout.Context, camera *Camera, board
 }
 
 // renderBoardSubstrate renders the PCB substrate (board material) as background
-func renderBoardSubstrate(gtx layout.Context, camera *Camera, board *parser.Board, config *LayerConfig) {
+func renderBoardSubstrate(gtx layout.Context, camera *Camera, board *pcb.Board, config *LayerConfig) {
 	// Get board bounding box
 	bbox := board.GetBoundingBox()
 	if bbox.IsEmpty() {
