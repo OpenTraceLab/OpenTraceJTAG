@@ -12,7 +12,7 @@ import (
 	"gioui.org/op"
 	"gioui.org/op/paint"
 	"gioui.org/unit"
-	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/parser"
+	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/pcb"
 	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/renderer"
 )
 
@@ -33,7 +33,7 @@ func main() {
 
 	// Parse the board file
 	fmt.Printf("Loading board: %s\n", filename)
-	board, err := parser.ParseFile(filename)
+	board, err := pcb.ParseFile(filename)
 	if err != nil {
 		fmt.Printf("Error parsing board: %v\n", err)
 		os.Exit(1)
@@ -70,7 +70,7 @@ func main() {
 	app.Main()
 }
 
-func run(w *app.Window, board *parser.Board, bbox parser.BoundingBox) error {
+func run(w *app.Window, board *pcb.Board, bbox pcb.BoundingBox) error {
 	// Initialize camera
 	camera := renderer.NewCamera(1000, 800)
 	if !bbox.IsEmpty() {
@@ -182,7 +182,7 @@ func run(w *app.Window, board *parser.Board, bbox parser.BoundingBox) error {
 	}
 }
 
-func handleKeyPress(k key.Name, camera *renderer.Camera, bbox parser.BoundingBox, currentOffset float64) (bool, float64) {
+func handleKeyPress(k key.Name, camera *renderer.Camera, bbox pcb.BoundingBox, currentOffset float64) (bool, float64) {
 	switch k {
 	case key.NameEscape, "Q":
 		return true, currentOffset // Signal to close
@@ -215,12 +215,12 @@ func handleKeyPress(k key.Name, camera *renderer.Camera, bbox parser.BoundingBox
 	return false, currentOffset
 }
 
-func renderBoard(gtx layout.Context, camera *renderer.Camera, board *parser.Board) {
+func renderBoard(gtx layout.Context, camera *renderer.Camera, board *pcb.Board) {
 	// Call the Gio renderer
 	renderer.RenderBoard(gtx, camera, board)
 }
 
-func renderBoardWithDebug(gtx layout.Context, camera *renderer.Camera, board *parser.Board, debugRotationOffset float64) {
+func renderBoardWithDebug(gtx layout.Context, camera *renderer.Camera, board *pcb.Board, debugRotationOffset float64) {
 	// Call the Gio renderer with debug rotation offset
 	renderer.RenderBoardWithDebug(gtx, camera, board, debugRotationOffset)
 }

@@ -5,7 +5,7 @@ import (
 	"os"
 	"sort"
 
-	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/parser"
+	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/pcb"
 )
 
 func main() {
@@ -20,7 +20,7 @@ func main() {
 	filename := os.Args[1]
 
 	// Parse board
-	board, err := parser.ParseFile(filename)
+	board, err := pcb.ParseFile(filename)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
@@ -37,7 +37,7 @@ func main() {
 	listAllNets(board)
 }
 
-func listAllNets(board *parser.Board) {
+func listAllNets(board *pcb.Board) {
 	fmt.Printf("Board: %d nets\n\n", len(board.Nets))
 	fmt.Printf("%-30s %6s %6s %6s\n", "Net Name", "Pads", "Tracks", "Vias")
 	fmt.Println("─────────────────────────────────────────────────────────")
@@ -58,7 +58,7 @@ func listAllNets(board *parser.Board) {
 	}
 }
 
-func showNetDetails(board *parser.Board, netName string) {
+func showNetDetails(board *pcb.Board, netName string) {
 	info := board.GetNetInfo(netName)
 	if info == nil {
 		fmt.Printf("Net '%s' not found\n", netName)
