@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/parser"
+	"github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/pcb"
 )
 
 func main() {
@@ -14,7 +14,7 @@ func main() {
 	}
 
 	filename := os.Args[1]
-	board, err := parser.ParseFile(filename)
+	board, err := pcb.ParseFile(filename)
 	if err != nil {
 		fmt.Printf("Error parsing: %v\n", err)
 		os.Exit(1)

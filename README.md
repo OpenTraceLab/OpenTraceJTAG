@@ -4,20 +4,34 @@ A unified Go toolkit for PCB design analysis and JTAG boundary scan testing.
 
 ## Overview
 
-OpenTraceJTAG combines two powerful capabilities:
-1. **KiCad PCB Parser & Renderer** - Parse and visualize KiCad board files
-2. **JTAG Boundary Scan System** - Parse BSDL files and control JTAG chains
+OpenTraceJTAG combines powerful capabilities in a unified CLI:
+1. **KiCad File Tools** - Parse and visualize KiCad PCB and schematic files
+2. **JTAG Boundary Scan** - Parse BSDL files and control JTAG chains
+3. **Interactive GUI** - Visual interface for JTAG operations and PCB viewing
 
 ## Features
 
-### KiCad PCB Tools
+### Unified CLI (`otj`)
+- Single command-line interface for all tools
+- Consistent command structure: `otj <category> <command>`
+- Categories: `ui`, `pcb`, `sch`, `jtag`
+- Integrated help system
 
-#### Parser (`pkg/kicad/parser`)
+### KiCad Tools
+
+#### PCB Parser (`pkg/kicad/pcb`)
 - Parse KiCad 6.0+ board files (.kicad_pcb)
 - S-expression format support
 - Extract tracks, vias, pads, zones, graphics, footprints
 - Net connectivity information
 - Bounding box calculations
+
+#### Schematic Parser (`pkg/kicad/schematic`)
+- Parse KiCad 6.0+ schematic files (.kicad_sch)
+- Extract components, wires, buses, labels
+- Hierarchical sheet support
+- Library symbol definitions
+- Property and pin information
 
 #### Renderer (`pkg/kicad/renderer`)
 - Gio-based 2D vector rendering with hardware acceleration
@@ -27,8 +41,10 @@ OpenTraceJTAG combines two powerful capabilities:
 - Camera transformations
 
 #### Commands
-- **gio-viewer** - Interactive PCB board viewer
-- **net-info** - Query net connections and statistics
+- **otj pcb view** - Interactive PCB board viewer
+- **otj pcb nets** - Query net connections and statistics
+- **otj sch info** - Query schematic information
+- **gio-viewer**, **net-info**, **sch-info** - Standalone tools
 
 ### JTAG Boundary Scan Tools
 
@@ -82,14 +98,54 @@ cd OpenTraceJTAG
 # Build all tools
 make build
 
-# Or build specific tools
+# Or build just the unified CLI (recommended)
+make build-otj
+
+# Or build specific tool categories
 make build-kicad  # KiCad tools only
 make build-jtag   # JTAG tools only
 ```
 
 ## Usage
 
-### KiCad Board Viewer
+### Unified CLI (Recommended)
+
+The `otj` (OpenTraceJTAG) command provides a unified interface to all functionality:
+
+```bash
+# Show all available commands
+./bin/otj --help
+
+# Launch interactive GUI
+./bin/otj ui
+
+# KiCad PCB commands
+./bin/otj pcb view board.kicad_pcb       # Interactive viewer
+./bin/otj pcb nets board.kicad_pcb       # List all nets
+./bin/otj pcb nets board.kicad_pcb GND   # Show specific net
+
+# KiCad Schematic commands
+./bin/otj sch info schematic.kicad_sch   # Show schematic summary
+./bin/otj sch info schematic.kicad_sch R1 # Show component details
+
+# JTAG commands
+./bin/otj jtag discover --adapter sim --count 2 --bsdl testdata
+./bin/otj jtag parse testdata/STM32F405_LQFP100.bsd
+```
+
+**PCB Viewer Controls:**
+- Left Click / R: Rotate board 90° clockwise
+- Right Click / F: Flip board (top/bottom view)
+- Scroll Wheel: Zoom in/out
+- Left Arrow: Rotate 90° counter-clockwise
+- Space: Fit board to view
+- Q / Escape: Quit
+
+### Standalone Tools
+
+Individual tools are also available for convenience:
+
+#### KiCad Board Viewer
 
 ```bash
 # Run the interactive viewer
@@ -99,17 +155,7 @@ make build-jtag   # JTAG tools only
 GIO_BACKEND=x11 ./bin/gio-viewer path/to/board.kicad_pcb
 ```
 
-**Viewer Controls:**
-- Left Click: Rotate board 90° clockwise
-- Right Click: Flip board (top/bottom view)
-- Scroll Wheel: Zoom in/out
-- F: Flip board
-- R: Rotate 90° clockwise
-- Left Arrow: Rotate 90° counter-clockwise
-- Space: Fit board to view
-- Q / Escape: Quit
-
-### Net Information
+#### Net Information
 
 ```bash
 # List all nets
@@ -119,7 +165,17 @@ GIO_BACKEND=x11 ./bin/gio-viewer path/to/board.kicad_pcb
 ./bin/net-info board.kicad_pcb GND
 ```
 
-### BSDL Parser
+#### Schematic Information
+
+```bash
+# Show schematic summary
+./bin/sch-info schematic.kicad_sch
+
+# Show component details
+./bin/sch-info schematic.kicad_sch R1
+```
+
+#### BSDL Parser
 
 ```bash
 # Parse a BSDL file
@@ -129,14 +185,14 @@ GIO_BACKEND=x11 ./bin/gio-viewer path/to/board.kicad_pcb
 ./bin/bsdl-parser info testdata/STM32F405_LQFP100.bsd
 ```
 
-### JTAG Operations
+#### JTAG Operations
 
 ```bash
-# Scan JTAG chain
-./bin/jtag scan
+# Discover JTAG chain
+./bin/jtag discover --adapter simulator --count 2 --bsdl testdata
 
-# Run boundary scan test
-./bin/jtag test --device 0
+# Parse BSDL file
+./bin/jtag parse testdata/STM32F405_LQFP100.bsd
 
 # Reverse engineer connections
 ./bin/jtag reveng --output connections.json
@@ -148,7 +204,9 @@ GIO_BACKEND=x11 ./bin/gio-viewer path/to/board.kicad_pcb
 OpenTraceJTAG/
 ├── pkg/
 │   ├── kicad/          # KiCad parser and renderer
-│   │   ├── parser/     # Board file parsing
+│   │   ├── sexp/       # S-expression infrastructure
+│   │   ├── pcb/        # PCB file parsing
+│   │   ├── schematic/  # Schematic file parsing
 │   │   └── renderer/   # Gio-based rendering
 │   ├── bsdl/           # BSDL parser
 │   ├── bsr/            # Boundary scan runtime
@@ -157,13 +215,16 @@ OpenTraceJTAG/
 │   ├── tap/            # TAP state machine
 │   └── reveng/         # Reverse engineering
 ├── cmd/
+│   ├── otj/            # Unified CLI (recommended)
 │   ├── gio-viewer/     # KiCad board viewer
 │   ├── net-info/       # Net query tool
+│   ├── sch-info/       # Schematic query tool
 │   ├── bsdl-parser/    # BSDL parser CLI
 │   └── jtag/           # JTAG CLI
 ├── internal/           # Internal packages
+│   └── ui/             # GUI application
 ├── assets/             # Fonts and resources
-├── testdata/           # Test files (BSDL, KiCad boards)
+├── testdata/           # Test files (BSDL, KiCad boards, schematics)
 └── docs/               # Documentation
 
 ```
@@ -174,7 +235,7 @@ OpenTraceJTAG/
 
 ```go
 import (
-    "github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/parser"
+    "github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/pcb"
     "github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/renderer"
 )
 

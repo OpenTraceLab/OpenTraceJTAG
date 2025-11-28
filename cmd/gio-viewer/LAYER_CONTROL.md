@@ -11,7 +11,7 @@ import (
     "gioui.org/app"
     "gioui.org/layout"
     "gioui.org/op"
-    "github.com/epkcfsm/kibrd/pkg/kicad/parser"
+    "github.com/epkcfsm/kibrd/pkg/kicad/pcb"
     "github.com/epkcfsm/kibrd/pkg/kicad/renderer"
 )
 

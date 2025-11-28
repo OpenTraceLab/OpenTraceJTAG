@@ -19,7 +19,7 @@ OpenTraceJTAG combines KiCad PCB visualization with JTAG boundary scan capabilit
 
 ## KiCad Stack
 
-### Parser (`pkg/kicad/parser`)
+### Parser (`pkg/kicad/pcb`)
 - Parses KiCad 6.0+ `.kicad_pcb` files (S-expression format)
 - Extracts: tracks, vias, pads, zones, graphics, footprints
 - Provides net connectivity information and bounding box calculations

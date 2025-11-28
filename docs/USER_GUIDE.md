@@ -156,7 +156,7 @@ sudo usermod -a -G plugdev $USER
 
 ### KiCad Parsing
 ```go
-import "github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/parser"
+import "github.com/OpenTraceLab/OpenTraceJTAG/pkg/kicad/pcb"
 
 board, err := parser.ParseFile("board.kicad_pcb")
 if err != nil {

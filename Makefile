@@ -1,4 +1,4 @@
-.PHONY: help build build-kicad build-jtag test clean install lint fmt coverage run-viewer run-jtag docs
+.PHONY: help build build-otj build-kicad build-jtag test clean install lint fmt coverage run-viewer run-jtag run-otj docs
 
 # Use a project-local Go build cache
 GOCACHE ?= $(CURDIR)/.gocache
@@ -13,27 +13,38 @@ help:
 	@echo ""
 	@echo "Available targets:"
 	@echo "  make build          - Build all tools"
-	@echo "  make build-kicad    - Build KiCad tools only"
-	@echo "  make build-jtag     - Build JTAG tools only"
+	@echo "  make build-otj      - Build unified otj CLI (recommended)"
+	@echo "  make build-kicad    - Build standalone KiCad tools"
+	@echo "  make build-jtag     - Build standalone JTAG tools"
 	@echo "  make test           - Run all tests"
 	@echo "  make coverage       - Run tests with coverage report"
 	@echo "  make lint           - Run linter"
 	@echo "  make fmt            - Format code"
 	@echo "  make clean          - Remove build artifacts"
 	@echo "  make install        - Install all CLI tools"
+	@echo "  make run-otj        - Run unified otj CLI"
 	@echo "  make run-viewer     - Run KiCad board viewer"
 	@echo "  make run-jtag       - Run JTAG CLI"
 	@echo "  make docs           - Generate documentation"
 
 # Build all tools
-build: build-kicad build-jtag
+build: build-otj build-kicad build-jtag
+
+# Build unified otj CLI (recommended)
+build-otj:
+	@echo "Building unified otj CLI..."
+	@mkdir -p $(BIN_DIR)
+	go build -o $(BIN_DIR)/otj ./cmd/otj
+	@echo "✓ otj built successfully"
 
 # Build KiCad tools
 build-kicad:
 	@echo "Building KiCad tools..."
 	@mkdir -p $(BIN_DIR)
 	go build -o $(BIN_DIR)/gio-viewer ./cmd/gio-viewer
+	go build -o $(BIN_DIR)/sch-viewer ./cmd/sch-viewer
 	go build -o $(BIN_DIR)/net-info ./cmd/net-info
+	go build -o $(BIN_DIR)/sch-info ./cmd/sch-info
 	@echo "✓ KiCad tools built"
 
 # Build JTAG tools
@@ -68,13 +79,14 @@ fmt:
 clean:
 	rm -rf $(BIN_DIR)/
 	rm -f coverage.out coverage.html
-	rm -f gio-viewer net-info kibrd test-input viewer
 	go clean
 
 # Install all CLI tools
 install:
+	go install ./cmd/otj
 	go install ./cmd/gio-viewer
 	go install ./cmd/net-info
+	go install ./cmd/sch-info
 	go install ./cmd/bsdl-parser
 	go install ./cmd/jtag
 
@@ -85,6 +97,10 @@ run-viewer: build-kicad
 	else \
 		echo "No sample board file found"; \
 	fi
+
+# Run unified otj CLI
+run-otj: build-otj
+	./$(BIN_DIR)/otj --help
 
 # Run JTAG CLI
 run-jtag: build-jtag
@@ -109,6 +125,6 @@ docs:
 	@command -v mkdocs >/dev/null && (echo "Building MkDocs site..." && mkdocs build >/dev/null && echo "MkDocs output: site/") || echo "mkdocs not found, skipped site build"
 
 # Quick build for development
-quick: 
-	go build -o $(BIN_DIR)/gio-viewer ./cmd/gio-viewer
-	go build -o $(BIN_DIR)/jtag ./cmd/jtag
+quick:
+	@mkdir -p $(BIN_DIR)
+	go build -o $(BIN_DIR)/otj ./cmd/otj
